@@ -1,0 +1,80 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+# Skipped until DATABRICKS_HOST is set (full account)
+jobs:
+  acc:
+    if: vars.DATABRICKS_HOST != ''
+    runs-on: ubuntu-latest
+    environment: acc
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      DATABRICKS_AUTH_TYPE: github-oidc
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ vars.DEPLOY_SP_ID }}
+      BUNDLE_VAR_deploy_sp: ${{ vars.DEPLOY_SP_ID }}
+      BUNDLE_VAR_run_as_sp: ${{ vars.RUN_AS_SP_ID }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.3.3
+
+      - uses: databricks/setup-cli@v1.23.0
+
+      - run: uv sync --locked
+        working-directory: orders
+
+      - run: databricks bundle deploy -t acc
+        working-directory: orders
+
+      # weather looks up the policy that platform deploys
+      - run: databricks bundle deploy -t acc
+        working-directory: platform
+
+      - run: databricks bundle deploy -t acc
+        working-directory: weather
+
+  prd:
+    needs: acc
+    runs-on: ubuntu-latest
+    environment: prd
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      DATABRICKS_AUTH_TYPE: github-oidc
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ vars.DEPLOY_SP_ID }}
+      BUNDLE_VAR_deploy_sp: ${{ vars.DEPLOY_SP_ID }}
+      BUNDLE_VAR_run_as_sp: ${{ vars.RUN_AS_SP_ID }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.3.3
+
+      - uses: databricks/setup-cli@v1.23.0
+
+      - run: uv sync --locked
+        working-directory: orders
+
+      - run: databricks bundle deploy -t prd
+        working-directory: orders
+
+      # weather looks up the policy that platform deploys
+      - run: databricks bundle deploy -t prd
+        working-directory: platform
+
+      - run: databricks bundle deploy -t prd
+        working-directory: weather

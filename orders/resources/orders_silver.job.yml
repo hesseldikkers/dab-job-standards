@@ -1,0 +1,29 @@
+resources:
+  jobs:
+    orders_silver:
+      name: orders_silver
+
+      tags:
+        owner: orders-team
+        layer: silver
+
+      trigger:
+        table_update:
+          table_names:
+            - ${var.catalog}.${var.schema}.orders_bronze
+
+      tasks:
+        - task_key: standardize
+          environment_key: default
+          python_wheel_task:
+            package_name: orders
+            entry_point: silver
+            named_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+
+      environments:
+        - environment_key: default
+          spec:
+            dependencies:
+              - ../dist/*.whl

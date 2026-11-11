@@ -1,0 +1,28 @@
+resources:
+  jobs:
+    orders_bronze:
+      name: orders_bronze
+
+      tags:
+        owner: orders-team
+        layer: bronze
+
+      schedule:
+        quartz_cron_expression: "0 0 6 * * ?"
+        timezone_id: Europe/Amsterdam
+
+      tasks:
+        - task_key: ingest
+          environment_key: default
+          python_wheel_task:
+            package_name: orders
+            entry_point: bronze
+            named_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+
+      environments:
+        - environment_key: default
+          spec:
+            dependencies:
+              - ../dist/*.whl

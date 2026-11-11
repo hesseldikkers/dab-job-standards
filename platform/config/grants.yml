@@ -1,0 +1,23 @@
+variables:
+  policy_permissions:
+    type: complex
+    description: Permissions on the cluster policies in resources/.
+
+targets:
+  dev:
+    variables:
+      policy_permissions:
+        - level: CAN_USE
+          group_name: ${var.data_engineers}
+
+  acc:
+    variables:
+      policy_permissions:
+        - level: CAN_USE
+          group_name: ${var.data_engineers}
+
+  prd:
+    variables:
+      policy_permissions:
+        - level: CAN_USE
+          group_name: ${var.data_engineers}

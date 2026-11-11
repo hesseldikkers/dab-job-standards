@@ -1,0 +1,33 @@
+resources:
+  jobs:
+    weather_ingest:
+      name: weather_ingest
+
+      tags:
+        owner: forecasting-team
+        layer: bronze
+
+      schedule:
+        quartz_cron_expression: "0 0 5 * * ?"
+        timezone_id: Europe/Amsterdam
+
+      job_clusters:
+        - job_cluster_key: default
+          new_cluster:
+            policy_id: ${var.job_policy}
+            apply_policy_default_values: true
+            autoscale:
+              min_workers: 1
+              max_workers: 4
+
+      tasks:
+        - task_key: ingest
+          job_cluster_key: default
+          python_wheel_task:
+            package_name: weather
+            entry_point: ingest
+            named_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+          libraries:
+            - whl: ../dist/*.whl

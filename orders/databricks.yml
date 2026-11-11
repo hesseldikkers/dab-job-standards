@@ -1,0 +1,87 @@
+bundle:
+  name: orders
+  databricks_cli_version: "1.23.0"
+
+include:
+  - resources/*.yml
+
+artifacts:
+  orders_wheel:
+    type: whl
+    build: uv build --wheel
+
+presets:
+  tags:
+    project: orders
+
+variables:
+  catalog:
+    default: workspace
+  schema:
+    description: Schema per target, set in each target below
+  warehouse_id:
+    lookup:
+      warehouse: Serverless Starter Warehouse
+  deploy_sp:
+    description: Deploy service principal, set by the pipeline
+    default: <deploy-sp-id>
+  run_as_sp:
+    description: Run-as service principal, set by the pipeline
+    default: <run-as-sp-id>
+
+python:
+  venv_path: .venv
+  mutators:
+    - "mutators:add_defaults"
+    - "mutators:require_owner"
+
+# No workspace.host: the repo is public and all targets share one
+# workspace. Locally use -p <profile>, in CI set DATABRICKS_HOST.
+targets:
+  dev:
+    default: true
+    mode: development
+    presets:
+      tags:
+        environment: dev
+    variables:
+      schema: orders_dev
+
+  acc:
+    mode: production
+    presets:
+      # Shared demo workspace; not needed with one workspace per target
+      name_prefix: "[acc] "
+      trigger_pause_status: UNPAUSED
+      tags:
+        environment: acc
+    workspace:
+      root_path: /Workspace/Users/${var.deploy_sp}/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      schema: orders_acc
+    run_as:
+      service_principal_name: ${var.run_as_sp}
+    permissions:
+      - service_principal_name: ${var.deploy_sp}
+        level: CAN_MANAGE
+      - group_name: <data-engineers>
+        level: CAN_VIEW
+
+  prd:
+    mode: production
+    git:
+      branch: main
+    presets:
+      tags:
+        environment: prd
+    workspace:
+      root_path: /Workspace/Users/${var.deploy_sp}/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      schema: orders_prd
+    run_as:
+      service_principal_name: ${var.run_as_sp}
+    permissions:
+      - service_principal_name: ${var.deploy_sp}
+        level: CAN_MANAGE
+      - group_name: <data-engineers>
+        level: CAN_VIEW

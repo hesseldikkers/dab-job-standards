@@ -1,0 +1,11 @@
+[sqlfluff]
+dialect = databricks
+templater = placeholder
+
+[sqlfluff:indentation]
+tab_space_size = 2
+
+[sqlfluff:templater:placeholder]
+param_style = colon
+catalog = workspace
+schema = orders_dev

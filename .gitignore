@@ -1,0 +1,15 @@
+docs/*
+article/
+snippets/*
+AGENTS.md
+.databricks/
+dist/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.coverage
+spark-warehouse/
+metastore_db/
+.ruff_cache/
+.venv/
+.vscode

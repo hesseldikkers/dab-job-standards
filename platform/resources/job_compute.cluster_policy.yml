@@ -1,0 +1,61 @@
+# Policy definition reference:
+# https://learn.microsoft.com/en-us/azure/databricks/admin/clusters/policy-definition
+
+resources:
+  cluster_policies:
+    job_compute:
+      name: job-compute-${bundle.target}
+      description: Standard policy for job clusters
+      lifecycle:
+        prevent_destroy: true
+      permissions: ${var.policy_permissions}
+      definition:
+        # Job compute only. Keeps the policy out of the all-purpose picker.
+        cluster_type:
+          type: fixed
+          value: job
+        data_security_mode:
+          type: fixed
+          value: DATA_SECURITY_MODE_DEDICATED
+        instance_pool_id:
+          type: forbidden
+        driver_instance_pool_id:
+          type: forbidden
+        spark_version:
+          type: unlimited
+          defaultValue: auto:latest-lts
+        node_type_id:
+          type: allowlist
+          values:
+            - Standard_D4ds_v5
+            - Standard_D8ds_v5
+          defaultValue: Standard_D4ds_v5
+        driver_node_type_id:
+          type: allowlist
+          values:
+            - Standard_D4ds_v5
+            - Standard_D8ds_v5
+          defaultValue: Standard_D4ds_v5
+        # Force autoscaling: a fixed worker count is not allowed.
+        num_workers:
+          type: forbidden
+        autoscale.min_workers:
+          type: range
+          maxValue: 4
+          defaultValue: 2
+        autoscale.max_workers:
+          type: range
+          maxValue: 8
+          defaultValue: 4
+        dbus_per_hour:
+          type: range
+          maxValue: 50
+        azure_attributes.availability:
+          type: fixed
+          value: ON_DEMAND_AZURE
+        custom_tags.policy:
+          type: fixed
+          value: job-compute
+        custom_tags.cost_center:
+          type: unlimited
+          defaultValue: unassigned

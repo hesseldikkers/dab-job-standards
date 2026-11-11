@@ -1,0 +1,23 @@
+resources:
+  jobs:
+    orders_gold:
+      name: orders_gold
+
+      tags:
+        owner: orders-team
+        layer: gold
+
+      trigger:
+        table_update:
+          table_names:
+            - ${var.catalog}.${var.schema}.orders_silver
+
+      tasks:
+        - task_key: build_mart
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/orders/sql/orders_daily.sql
+            parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}

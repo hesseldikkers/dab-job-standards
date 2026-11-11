@@ -1,0 +1,36 @@
+bundle:
+  name: platform
+  databricks_cli_version: "1.23.0"
+
+include:
+  - config/*.yml
+  - resources/*.yml
+
+variables:
+  deploy_sp:
+    description: Deploy service principal, set by the pipeline
+    default: <deploy-sp-id>
+  data_engineers:
+    description: Group that may use the policies, see config/grants.yml
+    default: <data-engineers>
+
+# Policies are shared, so every target is production mode and
+# gets its own policy name. No workspace.host: see the root README.
+targets:
+  dev:
+    default: true
+    mode: production
+    workspace:
+      root_path: /Workspace/Users/${var.deploy_sp}/.bundle/${bundle.name}/${bundle.target}
+
+  acc:
+    mode: production
+    workspace:
+      root_path: /Workspace/Users/${var.deploy_sp}/.bundle/${bundle.name}/${bundle.target}
+
+  prd:
+    mode: production
+    git:
+      branch: main
+    workspace:
+      root_path: /Workspace/Users/${var.deploy_sp}/.bundle/${bundle.name}/${bundle.target}
